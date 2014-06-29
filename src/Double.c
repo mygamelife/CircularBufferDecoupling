@@ -1,9 +1,10 @@
 #include "Double.h"
+#include "stdio.h"
 
 void copyDouble(void *dest , void *source)
 {
-	int *sourceDouble = (int *)source;
-	char *headPtr = (char *)dest;
+	double *sourceDouble = (double *)source;
+	double *headPtr = (double *)dest;
 	
 	*headPtr = *sourceDouble; 
 }

@@ -2,17 +2,12 @@
 #include "malloc.h"
 #include "Integer.h"
 #include "Double.h"
+#include "stdio.h"
 #include "ErrorCode.h"
 #include "CException.h"
 
-/* void(*cpy)(void * , void *)
-/* copy the typedata (double , int , char) into the buffer 
-/* Integer.c (copyInt(void * , void*))
-/* Double.c (copyDouble(void * , void*)))
-/* char *headPtr = (char *)head;
-/* headPtr[cb->sizeOfType * i];
+/* Create a new buffer for integer/double type
 */
-
 CircularBuffer *circularBufferNew(int length , int sizeOfType)
 {
 	CircularBuffer *cb = malloc(sizeof(CircularBuffer));
@@ -36,19 +31,49 @@ void circularBufferDel(CircularBuffer *cb)
 
 void circularBufferAdd(CircularBuffer *cb , void *obj , void(*copy)(void * , void *))
 {	
-	char *headPtr = (char *)cb->head;
-	
 	if(circularBufferIsFull(cb))
+	{
 		Throw(ERR_BUFFER_FULL);
-
-	copy(headPtr , obj);
-	cb->head++;
+	}
+	
+	copy(cb->head , obj);
 	cb->size++;
+	cb->head += cb->sizeOfType;	
+	
+	if(&cb->head == &cb->buffer+cb->size)
+		cb->head = cb->buffer;
+}
+
+/*Remove integer/double data from buffer
+ *After remove size will decrement one
+ *cb->size element inside circular buffer
+ *obj is element wanted to be remove
+ *cb->tail will point to the next data that going to be remove
+*/
+void circularBufferRemove(CircularBuffer *cb , void *obj , void(*copy)(void * , void *))
+{	
+	if(circularBufferIsEmpty(cb))
+		Throw(ERR_BUFFER_EMPTY);
+		
+	copy(cb->tail , obj);
+	cb->size--;
+	cb->tail += cb->sizeOfType;
+	
+	if(cb->tail == cb->buffer+(cb->sizeOfType * cb->length))
+		cb->tail = cb->buffer;
 }
 
 int circularBufferIsFull(CircularBuffer *cb)
 {
-	if(cb->size == cb->length)
+	if(cb->size >= cb->length)
+		return 1;
+		
+	else return 0;
+}
+
+int circularBufferIsEmpty(CircularBuffer *cb)
+{
+	if(cb->size <= 0)
 		return 1;
 		
 	else return 0;
